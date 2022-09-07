@@ -1,11 +1,10 @@
-# Telepresence with Amazon EKS and ReleaseHub
+# ReleaseHub Quickstart for Telepresence
+
+<img src="images/overview.png" width="700">
 
 This project demonstrates how to use [Telepresence.io](https://www.telepresence.io/docs/latest/quick-start/) to intercept traffic sent to a [ReleaseHub](https://releasehub.com)-managed Kubernetes service on Amazon EKS in your AWS account and reroute it to your local developer machine.
 
 This readme contains a generic quickstart followed by a more detailed [Example Walkthrough with ReleaseHub](#example_walkthrough_with_releasehub).
-
-## Overview
-
 ### ReleaseHub
 
 [ReleaseHub](https://releasehub.com) _environments-as-a-service_ (EaaS) offloads the heavy lifting of cloud infrastructure and service configuration by translating files like `docker-compose.yaml` or `package.json` into _complete_, full-stack ephemeral cloud environments in your own cloud accounts. Users may also package virtually any existing code (e.g. infra-as-code, test automation, or database migrations) into a ReleaseHub template.
