@@ -36,17 +36,18 @@ resources:
 
 hostnames:
 - frontend: frontend-${env_id}.${domain}
+
+services:
 - name: frontend
-  image: releasehub-samples/releasehub-multifeature-demo/frontend
-  build:
-    context: "./src/reactjs-frontend"
-    dockerfile: Dockerfile
-  has_repo: true
+  image: hashicorp/http-echo
+  has_repo: false
   static: false
   ports:
   - type: node_port
-    target_port: '3000'
-    port: '3000'
+    target_port: '5678'
+    port: '5678'
+  args:
+  - -text="I'm a mock frontend!"
 
 workflows:
 - name: setup
