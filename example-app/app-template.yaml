@@ -1,0 +1,69 @@
+##
+# This is an example Application Template with a frontend you can deploy to test with Telepresence.
+# You'll want to copy-paste the uncommented sections into a new Application or merge into an existing
+# App template created for test purposes. If you need a project to jumpstart your app, you can fork
+# one of the demo apps at https://github.com/awesome-release
+# #
+
+# The commented lines below will be auto-generated for you when you first create your app template, 
+# and will be unique to your account, app, git repo, and DNS settings. You should not include these 
+# commented lines when copying/merging this file into your own template,they're only shown for reference: 
+# ---
+# app: multifeature-demo
+# auto_deploy: true
+# context: hubofhubs-release-us-west-2
+# domain: release.hubofhubs.com
+# repo_name: releasehub-samples/releasehub-multifeature-demo
+
+
+# Copy/merge into your existing app template and create an environment from it: 
+hostnames:
+- api: api-${env_id}.${domain}
+- frontend: frontend-${env_id}.${domain}
+
+environment_templates:
+- name: ephemeral
+- name: permanent
+
+resources:
+  cpu:
+    limits: 1000m
+    requests: 100m
+  memory:
+    limits: 1Gi
+    requests: 100Mi
+  replicas: 1
+
+hostnames:
+- frontend: frontend-${env_id}.${domain}
+
+services:
+- name: frontend
+  image: hashicorp/http-echo
+  has_repo: false
+  static: false
+  ports:
+  - type: node_port
+    target_port: '5678'
+    port: '5678'
+  args:
+  - -text="I'm a mock frontend!"
+
+workflows:
+- name: setup
+  parallelize:
+  - step: start_all_at_once
+    tasks:
+    - services.all
+
+- name: patch
+  parallelize:
+  - step: start_all_at_once
+    tasks:
+    - services.all
+
+- name: teardown
+  parallelize:
+  - step: remove_environment
+    tasks:
+    - release.remove_environment
