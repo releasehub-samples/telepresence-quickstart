@@ -123,29 +123,19 @@ Installing the Telepresence Traffic Manager into your Amazon EKS cluster require
 
 For example, we will use our account's only cluster, `hubofhubs-release-us-west-2`, as shown below:
 
-![alt_text](images/walkthrough/image1.png "image_tooltip")
+![alt_text](images/walkthrough/cluster_name.png)
 
-To prepare the remote cluster, the Telepresence traffic-manager will need to be installed into a dedicated namespace on the cluster using [Helm](https://helm.sh/). Installation instructions for Helm are located [here](https://helm.sh/docs/intro/install/).
+To prepare the remote cluster, the Telepresence traffic-manager will need to be installed into a dedicated namespace on the cluster using [Helm](https://helm.sh/), a popular Kubernetes package management solution ([installation instructions](https://helm.sh/docs/intro/install/)).
 
-With Helm installed, add the appropriate repository for the Telepresence traffic-manager.
-
-```sh
-helm repo add datawire https://app.getambassador.io
-```
-
-![alt_text](images/walkthrough/image2.png "image_tooltip")
-
-Installing the Helm [chart](https://helm.sh/docs/topics/charts/) requires access to your remote cluster. For clusters being utilized by ReleaseHub, this is easily accomplished with the [ReleaseHub CLI](https://docs.releasehub.com/cli/installation). Follow the [installation](https://docs.releasehub.com/cli/installation), [configuration](https://docs.releasehub.com/cli/configuration), and [authentication](https://docs.releasehub.com/cli/getting-started) instructions to set up the ReleaseHub CLI for your account and target cluster.
-
-Using the ReleaseHub CLI’s _cluster exec_ command, install the Telepresence traffic manager  into a new _ambassador_ namespace [Note 1](#note_on_ambassador_namespace)**:
+Next, [set your local Kubernetes Context](https://medium.com/@kritika.singhal/managing-kubernetes-context-using-kubectl-fe78a9cdc506) to the cluster you plan to use. With ReleaseHub-managed clusters, this is easily accomplished with the [ReleaseHub CLI](https://docs.releasehub.com/cli/installation) command `release cluster exec --cluster CLUSTER_NAME -- SOME_COMMAND` as shown below [Note 1](#note_on_ambassador_namespace)**:
 
 ```sh
-release clusters exec --cluster :CLUSTER_NAME -- helm install traffic-manager --create-namespace --namespace ambassador datawire/telepresence
+release clusters exec --cluster CLUSTER_NAME -- telepresence helm install
 ```
 
-![alt_text](images/walkthrough/image3.png "image_tooltip")
+<img src="images/walkthrough/helm_install.png" width="500">
 
-**Note 1** <a name="note_on_ambassador_namespace"> - [Ambassador](https://app.getambassador.io/cloud/preview/?fromLogin=true) is the name of a commercial extension offered by Ambassador Labs, the developers behind Telepresence. Certain default settings of Telepresence expect the traffic manager to be in the `ambassador` namespace. If you want to use a different name, refer to Telepresence documentation for needed changes.
+* <a name="note_on_ambassador_namespace"> [Ambassador](https://app.getambassador.io/cloud/preview/?fromLogin=true) is the name of a commercial extension offered by Ambassador Labs, the developers behind Telepresence. By default, `telepresence helm install` will install the Traffic Manager into a new `ambassador` namespace. If you want to use a different name, refer to Telepresence documentation, as other changes will be needed.
 
 ### Intercepting a Running Service
 
@@ -153,23 +143,19 @@ With dependencies taken care of, we will now prepare to intercept traffic.
 
 To follow along, you will need to have an existing Application Template defining a service you want to intercept and an already-running or newly deployed environment. Containerized web frontend apps are an easy way to test things out, and our example will use [hashicorp/http-echo](https://github.com/hashicorp/http-echo) to simply return “Hello, world!” to any inbound requests received.
 
-Once you have a candidate service identified, you’ll need the service name, service port, and namespace of the container you want to intercept. You can find this information as shown below:
+Once you have a candidate service identified, you’ll need the service name, service port, and namespace of the container you want to intercept. For our demo, we’ll be using the `frontend` service listening on port `5678` in the `ted38f7-telepresence-joshdirkx-main` namespace, as shown below:
 
-Namespace available on environment’s _Details_ page:
+* Namespace available on environment’s _Details_ page:
 
-![alt_text](images/walkthrough/image4.png "image_tooltip")
+    <img src="images/walkthrough/namespace.png" width="600">
 
-Service name is in your Environment Configuration on the _Settings_ tab of your environment:
+* Find the `name` and `port`from your Environment Configuration on the _Settings_ tab of your environment:
 
-![alt_text](images/walkthrough/image5.png "image_tooltip")
-
-* The `port` refers to the the service port receiving external traffic and is the port you want to use.
+    <img src="images/walkthrough/service_name.png" width="400">
 
 Current response from our environment’s example frontend:
 
-![alt_text](images/walkthrough/image6.png "image_tooltip")
-
-For our demo, we’ll be using the `frontend` service in the `ted38f7-telepresence-joshdirkx-main`.
+<img src="images/walkthrough/release-without-intercept.png" width="400">
 
 ### Remove your ReleaseHub namespace quota
 
@@ -191,17 +177,27 @@ In our example, we’ll again use hashicorp/http-echo to run a local web server 
 docker run -p 3000:5678 hashicorp/http-echo -text="Hi, there! I'm a laptop container intercepting traffic from a live service in Kubernetes."
 ```
 
+Opening http://localhost:3000 confirms that our local service is running correctly:
+
+<img src="images/walkthrough/localhost.png" width="400">
+![]()
+
 ### Intercept Traffic
 
 Once your local service is running,   you’re now ready use Telepresence to intercept your remote traffic and reroute it to the port of your local machine with the command below:
 
 ```sh
-release clusters exec -- telepresence intercept -p LOCAL_PORT:REMOTE_PORT --preview-url=false --http-header=all --namespace=:NAMESPACE :SERVICE_NAME
+release clusters exec -- telepresence intercept -p LOCAL_PORT:REMOTE_PORT --preview-url=false --http-header=all --namespace=NAMESPACE SERVICE_NAME
 ```
 
-If you a message like below, your intercept was created successfully:
+If you a message like below, the intercept was created successfully:
 
-![alt_text](images/walkthrough/image7.png "image_tooltip")
+<img src="images/walkthrough/intercept.png" width="400">
+![]()
+
+And finally, we can see that requests to `` are now being intercepted and routed to the web server on our local machine:
+
+<img src="images/walkthrough/release-with-intercept.png" width="400">
 
 ### Cleanup
 
